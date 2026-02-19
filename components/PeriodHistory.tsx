@@ -1,12 +1,7 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, LayoutAnimation, Platform, UIManager } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, LayoutAnimation } from "react-native";
 import { DailyEntry } from "../lib/types";
 import { getTodayDateString } from "../lib/database";
-
-// Enable LayoutAnimation on Android
-if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 interface Props {
   entries: DailyEntry[];
