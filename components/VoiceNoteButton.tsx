@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
-import * as SpeechRecognition from "./modules/speech-recognition";
+import * as SpeechRecognition from "../modules/speech-recognition";
 
 export default function VoiceNoteButton() {
   const [isListening, setIsListening] = useState(false);
