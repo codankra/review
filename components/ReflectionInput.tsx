@@ -30,7 +30,7 @@ export default function ReflectionInput({ value, onSave }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Today's Notes</Text>
+      <Text style={styles.header}>Notes</Text>
       <TextInput
         style={styles.input}
         value={localText}

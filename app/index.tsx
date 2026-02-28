@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -16,38 +16,42 @@ import { router } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 
 import MetricGrid from "../components/MetricGrid";
-import ReflectionInput from "../components/ReflectionInput";
-import PeriodHistory from "../components/PeriodHistory";
+import NotesList from "../components/NotesList";
 
 import { loadSettings } from "../lib/storage";
 import {
   getActiveEntries,
-  updateNotes,
   updateScore,
   archiveAllActive,
   ensureTodayRow,
   getTodayDateString,
+  getAllNotes,
+  addNote,
+  updateNote,
+  deleteNote,
 } from "../lib/database";
-import { AppSettings, DailyEntry, ScoreValue } from "../lib/types";
+import { AppSettings, DailyEntry, ScoreValue, Note } from "../lib/types";
 
 export default function DashboardScreen() {
   const db = useSQLiteContext();
 
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [entries, setEntries] = useState<DailyEntry[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [exporting, setExporting] = useState(false);
 
   const today = getTodayDateString();
-  const todayEntry = entries.find((e) => e.date === today);
 
   // ─── Load everything ────────────────────────────────────────────
   const refresh = useCallback(async () => {
-    const [s, activeEntries] = await Promise.all([
+    const [s, activeEntries, allNotes] = await Promise.all([
       loadSettings(),
       getActiveEntries(db),
+      getAllNotes(db),
     ]);
     setSettings(s);
     setEntries(activeEntries);
+    setNotes(allNotes);
   }, [db]);
 
   // Initial load + reload when screen comes back into focus (e.g. after Settings)
@@ -82,12 +86,31 @@ export default function DashboardScreen() {
     [db]
   );
 
-  // ─── Notes save ──────────────────────────────────────────────────
-  const handleNotesSave = useCallback(
+  // ─── Notes handlers ───────────────────────────────────────────────
+  const handleAddNote = useCallback(
     async (text: string) => {
-      await updateNotes(db, today, text);
+      const newNote = await addNote(db, text);
+      setNotes((prev) => [newNote, ...prev]);
     },
-    [db, today]
+    [db]
+  );
+
+  const handleUpdateNote = useCallback(
+    async (id: number, text: string) => {
+      await updateNote(db, id, text);
+      setNotes((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, text } : n))
+      );
+    },
+    [db]
+  );
+
+  const handleDeleteNote = useCallback(
+    async (id: number) => {
+      await deleteNote(db, id);
+      setNotes((prev) => prev.filter((n) => n.id !== id));
+    },
+    [db]
   );
 
   // ─── Export logic ────────────────────────────────────────────────
@@ -119,8 +142,11 @@ export default function DashboardScreen() {
                 period_end_date: today,
                 entries: entries.map((e) => ({
                   date: e.date,
-                  notes: e.notes,
                   scores: e.scores,
+                })),
+                notes: notes.map((n) => ({
+                  text: n.text,
+                  created_at: n.created_at,
                 })),
               };
 
@@ -209,14 +235,13 @@ export default function DashboardScreen() {
           )}
         </View>
 
-        {/* Today's notes */}
-        <ReflectionInput
-          value={todayEntry?.notes ?? ""}
-          onSave={handleNotesSave}
+        {/* Notes */}
+        <NotesList
+          notes={notes}
+          onAdd={handleAddNote}
+          onUpdate={handleUpdateNote}
+          onDelete={handleDeleteNote}
         />
-
-        {/* Past notes accordion */}
-        <PeriodHistory entries={entries} />
 
         {/* Spacer for footer */}
         <View style={{ height: 80 }} />

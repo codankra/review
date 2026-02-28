@@ -1,5 +1,5 @@
 import * as SQLite from "expo-sqlite";
-import { DailyEntry, DailyEntryRow, ScoresMap } from "./types";
+import { DailyEntry, DailyEntryRow, ScoresMap, Note } from "./types";
 
 export const DATABASE_NAME = "theme_tracker.db";
 
@@ -18,7 +18,6 @@ function rowToEntry(row: DailyEntryRow): DailyEntry {
   } catch {}
   return {
     date: row.date,
-    notes: row.notes ?? "",
     scores,
     is_archived: row.is_archived as 0 | 1,
   };
@@ -30,9 +29,13 @@ export async function initDatabase(db: SQLite.SQLiteDatabase): Promise<void> {
     PRAGMA journal_mode = WAL;
     CREATE TABLE IF NOT EXISTS daily_entries (
       date        TEXT PRIMARY KEY,
-      notes       TEXT DEFAULT '',
       scores      TEXT DEFAULT '{}',
       is_archived INTEGER DEFAULT 0
+    );
+    CREATE TABLE IF NOT EXISTS notes (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      text        TEXT NOT NULL,
+      created_at  TEXT DEFAULT (datetime('now'))
     );
   `);
   await ensureTodayRow(db);
@@ -89,4 +92,31 @@ export async function archiveAllActive(db: SQLite.SQLiteDatabase): Promise<void>
 
 export async function getAllActiveRaw(db: SQLite.SQLiteDatabase): Promise<DailyEntry[]> {
   return getActiveEntries(db);
+}
+
+export async function getAllNotes(db: SQLite.SQLiteDatabase): Promise<Note[]> {
+  const rows = await db.getAllAsync<Note>(
+    `SELECT id, text, created_at FROM notes ORDER BY created_at DESC`
+  );
+  return rows;
+}
+
+export async function addNote(db: SQLite.SQLiteDatabase, text: string): Promise<Note> {
+  const result = await db.runAsync(
+    `INSERT INTO notes (text) VALUES (?)`,
+    [text]
+  );
+  const rows = await db.getAllAsync<Note>(
+    `SELECT id, text, created_at FROM notes WHERE id = ?`,
+    [result.lastInsertRowId]
+  );
+  return rows[0];
+}
+
+export async function updateNote(db: SQLite.SQLiteDatabase, id: number, text: string): Promise<void> {
+  await db.runAsync(`UPDATE notes SET text = ? WHERE id = ?`, [text, id]);
+}
+
+export async function deleteNote(db: SQLite.SQLiteDatabase, id: number): Promise<void> {
+  await db.runAsync(`DELETE FROM notes WHERE id = ?`, [id]);
 }
