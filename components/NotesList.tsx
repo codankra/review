@@ -138,6 +138,7 @@ export default function NotesList({ notes, onAdd, onUpdate, onDelete }: Props) {
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderNote}
         style={styles.list}
+        nestedScrollEnabled
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <Text style={styles.emptyText}>No notes yet. Add one above!</Text>

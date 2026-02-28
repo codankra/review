@@ -21,19 +21,19 @@ interface Props {
 
 // Cycle: 0 -> 0.5 -> 1.0 -> 0
 function cycleScore(current: ScoreValue | undefined): ScoreValue {
-  if (!current || current === 0) return 0.5;
+  if (current === undefined || current === 0) return 0.5;
   if (current === 0.5) return 1.0;
   return 0;
 }
 
 function scoreSymbol(score: ScoreValue | undefined): string {
-  if (!score || score === 0) return "○";
+  if (score === undefined || score === 0) return "○";
   if (score === 0.5) return "◑";
   return "●";
 }
 
 function scoreColor(score: ScoreValue | undefined): string {
-  if (!score || score === 0) return "#9E9E9E";
+  if (score === undefined || score === 0) return "#9E9E9E";
   if (score === 0.5) return "#FF9800";
   return "#4CAF50";
 }
