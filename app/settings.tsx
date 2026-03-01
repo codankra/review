@@ -9,14 +9,14 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
-  StatusBar,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { loadSettings, saveSettings, parseAndValidateConfig } from "../lib/storage";
 import { AppSettings } from "../lib/types";
 
 export default function SettingsScreen() {
+  const insets = useSafeAreaInsets();
   const [configText, setConfigText] = useState("");
   const [exportUrl, setExportUrl] = useState("");
   const [saving, setSaving] = useState(false);
@@ -55,8 +55,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="light-content" backgroundColor="#0A0A0A" />
+    <View style={[styles.safe, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.flex}
@@ -134,7 +133,7 @@ export default function SettingsScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 

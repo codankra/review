@@ -7,10 +7,9 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-  StatusBar,
   AppState,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSQLiteContext } from "expo-sqlite";
 import { router } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
@@ -181,13 +180,15 @@ export default function DashboardScreen() {
   };
 
   // ─── Render ──────────────────────────────────────────────────────
+  const insets = useSafeAreaInsets();
+
   if (!settings) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <View style={[styles.safe, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <View style={styles.loading}>
           <ActivityIndicator color="#BB86FC" />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -198,9 +199,7 @@ export default function DashboardScreen() {
   })();
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <StatusBar barStyle="light-content" backgroundColor="#0A0A0A" />
-
+    <View style={[styles.safe, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       {/* ── Top bar ── */}
       <View style={styles.topBar}>
         <View>
@@ -262,7 +261,7 @@ export default function DashboardScreen() {
           )}
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
