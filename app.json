@@ -40,6 +40,9 @@
       "eas": {
         "projectId": "dc395eb4-56a3-48f3-b297-13f93804d526"
       }
+    },
+    "experiments": {
+      "localModules": ["./modules/speech-recognition"]
     }
   }
 }

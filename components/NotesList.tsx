@@ -9,6 +9,7 @@ import {
   Alert,
 } from "react-native";
 import { Note } from "../lib/types";
+import VoiceNoteButton from "./VoiceNoteButton";
 
 interface Props {
   notes: Note[];
@@ -38,6 +39,10 @@ export default function NotesList({ notes, onAdd, onUpdate, onDelete }: Props) {
     if (!trimmed) return;
     onAdd(trimmed);
     setNewNoteText("");
+  };
+
+  const handleVoiceTranscript = (text: string) => {
+    setNewNoteText((prev) => (prev ? `${prev} ${text}` : text));
   };
 
   const startEdit = (note: Note) => {
@@ -124,6 +129,7 @@ export default function NotesList({ notes, onAdd, onUpdate, onDelete }: Props) {
           placeholderTextColor="#555"
           multiline
         />
+        <VoiceNoteButton onTranscript={handleVoiceTranscript} />
         <TouchableOpacity
           onPress={handleAdd}
           style={[styles.addBtn, !newNoteText.trim() && styles.addBtnDisabled]}

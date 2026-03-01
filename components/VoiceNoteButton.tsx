@@ -2,10 +2,13 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import * as SpeechRecognition from "../modules/speech-recognition";
 
-export default function VoiceNoteButton() {
+interface Props {
+  onTranscript: (text: string) => void;
+}
+
+export default function VoiceNoteButton({ onTranscript }: Props) {
   const [isListening, setIsListening] = useState(false);
   const [partialTranscript, setPartialTranscript] = useState("");
-  const [finalTranscript, setFinalTranscript] = useState("");
 
   useEffect(() => {
     const subscriptions = [
@@ -18,7 +21,6 @@ export default function VoiceNoteButton() {
       }),
 
       SpeechRecognition.addListener("onEndOfSpeech", () => {
-        console.log("Speech ended");
         setIsListening(false);
       }),
 
@@ -30,7 +32,7 @@ export default function VoiceNoteButton() {
 
       SpeechRecognition.addListener("onResults", ({ transcript }) => {
         console.log("Final result:", transcript);
-        setFinalTranscript(transcript);
+        onTranscript(transcript);
         setPartialTranscript("");
       }),
 
@@ -44,7 +46,7 @@ export default function VoiceNoteButton() {
       subscriptions.forEach((sub) => sub.remove());
       SpeechRecognition.destroy();
     };
-  }, []);
+  }, [onTranscript]);
 
   const handlePress = async () => {
     if (isListening) {
@@ -61,7 +63,6 @@ export default function VoiceNoteButton() {
         await SpeechRecognition.start();
         setIsListening(true);
         setPartialTranscript("");
-        setFinalTranscript("");
       } catch (error) {
         Alert.alert("Error", "Failed to start speech recognition");
         console.error(error);
@@ -70,73 +71,30 @@ export default function VoiceNoteButton() {
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={[styles.button, isListening && styles.buttonActive]}
-        onPress={handlePress}
-      >
-        <Text style={styles.buttonText}>
-          {isListening ? "🎤 Listening..." : "🎤 Tap to Speak"}
-        </Text>
-      </TouchableOpacity>
-
-      {partialTranscript ? (
-        <View style={styles.transcriptContainer}>
-          <Text style={styles.label}>Listening:</Text>
-          <Text style={styles.partialText}>{partialTranscript}</Text>
-        </View>
-      ) : null}
-
-      {finalTranscript ? (
-        <View style={styles.transcriptContainer}>
-          <Text style={styles.label}>You said:</Text>
-          <Text style={styles.finalText}>{finalTranscript}</Text>
-        </View>
-      ) : null}
-    </View>
+    <TouchableOpacity
+      style={[styles.button, isListening && styles.buttonActive]}
+      onPress={handlePress}
+    >
+      <Text style={styles.buttonText}>
+        {isListening ? "◉" : "🎤"}
+      </Text>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    alignItems: "center",
-  },
   button: {
-    backgroundColor: "#007AFF",
-    paddingHorizontal: 30,
-    paddingVertical: 15,
-    borderRadius: 25,
-    minWidth: 200,
+    width: 44,
+    height: 44,
+    backgroundColor: "#333",
+    borderRadius: 8,
     alignItems: "center",
+    justifyContent: "center",
   },
   buttonActive: {
-    backgroundColor: "#FF3B30",
+    backgroundColor: "#BB86FC",
   },
   buttonText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  transcriptContainer: {
-    marginTop: 20,
-    padding: 15,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 10,
-    width: "100%",
-  },
-  label: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 5,
-  },
-  partialText: {
-    fontSize: 16,
-    color: "#999",
-    fontStyle: "italic",
-  },
-  finalText: {
-    fontSize: 16,
-    color: "#000",
+    fontSize: 20,
   },
 });
