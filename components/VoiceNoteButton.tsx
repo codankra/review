@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, memo } from "react";
 import { Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import {
   ExpoSpeechRecognitionModule,
@@ -9,9 +9,8 @@ interface Props {
   onTranscript: (text: string) => void;
 }
 
-export default function VoiceNoteButton({ onTranscript }: Props) {
+function VoiceNoteButtonComponent({ onTranscript }: Props) {
   const [isListening, setIsListening] = useState(false);
-  const [partialTranscript, setPartialTranscript] = useState("");
 
   useSpeechRecognitionEvent("start", () => {
     console.log("Speech started");
@@ -34,7 +33,6 @@ export default function VoiceNoteButton({ onTranscript }: Props) {
     if (!result || !event.isFinal) return;
 
     console.log("Result:", result.transcript);
-    setPartialTranscript(result.transcript);
     onTranscript(result.transcript);
   });
 
@@ -69,7 +67,6 @@ export default function VoiceNoteButton({ onTranscript }: Props) {
           continuous: false,
         });
         setIsListening(true);
-        setPartialTranscript("");
       } catch (error) {
         Alert.alert("Error", "Failed to start speech recognition");
         console.error(error);
@@ -88,6 +85,8 @@ export default function VoiceNoteButton({ onTranscript }: Props) {
     </TouchableOpacity>
   );
 }
+
+export default memo(VoiceNoteButtonComponent);
 
 const styles = StyleSheet.create({
   button: {

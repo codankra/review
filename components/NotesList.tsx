@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, memo } from "react";
 import {
   View,
   Text,
@@ -7,10 +7,9 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-  KeyboardAvoidingView,
 } from "react-native";
 import { Note } from "../lib/types";
-import VoiceNoteButton from "./VoiceNoteButton";
+import NoteInput from "./NoteInput";
 
 interface Props {
   notes: Note[];
@@ -29,22 +28,14 @@ function formatDate(dateStr: string): string {
   });
 }
 
-export default function NotesList({ notes, onAdd, onUpdate, onDelete }: Props) {
-  const [newNoteText, setNewNoteText] = useState("");
+export default memo(function NotesList({
+  notes,
+  onAdd,
+  onUpdate,
+  onDelete,
+}: Props) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
-  const inputRef = useRef<TextInput>(null);
-
-  const handleAdd = () => {
-    const trimmed = newNoteText.trim();
-    if (!trimmed) return;
-    onAdd(trimmed);
-    setNewNoteText("");
-  };
-
-  const handleVoiceTranscript = (text: string) => {
-    setNewNoteText((prev) => (prev ? `${prev} ${text}` : text));
-  };
 
   const startEdit = (note: Note) => {
     setEditingId(note.id);
@@ -103,10 +94,16 @@ export default function NotesList({ notes, onAdd, onUpdate, onDelete }: Props) {
         <View style={styles.noteHeader}>
           <Text style={styles.noteDate}>{formatDate(item.created_at)}</Text>
           <View style={styles.noteActions}>
-            <TouchableOpacity onPress={() => startEdit(item)} style={styles.actionBtn}>
+            <TouchableOpacity
+              onPress={() => startEdit(item)}
+              style={styles.actionBtn}
+            >
               <Text style={styles.editIcon}>✎</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => confirmDelete(item.id)} style={styles.actionBtn}>
+            <TouchableOpacity
+              onPress={() => confirmDelete(item.id)}
+              style={styles.actionBtn}
+            >
               <Text style={styles.deleteIcon}>✕</Text>
             </TouchableOpacity>
           </View>
@@ -117,43 +114,25 @@ export default function NotesList({ notes, onAdd, onUpdate, onDelete }: Props) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior="height"
-      keyboardVerticalOffset={100}
-    >
+    <View style={styles.container}>
       <Text style={styles.header}>Notes</Text>
 
-      <View style={styles.addContainer}>
-        <TextInput
-          ref={inputRef}
-          style={styles.addInput}
-          value={newNoteText}
-          onChangeText={setNewNoteText}
-          placeholder="Add a note..."
-          placeholderTextColor="#555"
-          multiline
-        />
-        <VoiceNoteButton onTranscript={handleVoiceTranscript} />
-        <TouchableOpacity
-          onPress={handleAdd}
-          style={[styles.addBtn, !newNoteText.trim() && styles.addBtnDisabled]}
-          disabled={!newNoteText.trim()}
-        >
-          <Text style={styles.addBtnText}>+</Text>
-        </TouchableOpacity>
-      </View>
+      <NoteInput onAdd={onAdd} />
 
-      <ScrollView style={styles.list} nestedScrollEnabled showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.list}
+        nestedScrollEnabled
+        showsVerticalScrollIndicator={false}
+      >
         {notes.length === 0 ? (
           <Text style={styles.emptyText}>No notes yet. Add one above!</Text>
         ) : (
           notes.map((note: Note) => renderNote({ item: note }))
         )}
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -169,42 +148,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: "uppercase",
     marginBottom: 12,
-  },
-  addContainer: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    marginBottom: 16,
-  },
-  addInput: {
-    flex: 1,
-    backgroundColor: "#1A1A2E",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#333",
-    color: "#E0E0E0",
-    fontSize: 14,
-    lineHeight: 20,
-    padding: 12,
-    minHeight: 50,
-    maxHeight: 100,
-  },
-  addBtn: {
-    width: 44,
-    height: 44,
-    backgroundColor: "#BB86FC",
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    marginLeft: 8,
-  },
-  addBtnDisabled: {
-    opacity: 0.4,
-  },
-  addBtnText: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#000",
-    lineHeight: 28,
   },
   list: {
     flex: 1,
