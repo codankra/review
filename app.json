@@ -33,7 +33,7 @@
     "plugins": [
       "expo-sqlite",
       "expo-router",
-      "./plugins/withSpeechRecognition"
+      "expo-speech-recognition"
     ],
     "extra": {
       "router": {},

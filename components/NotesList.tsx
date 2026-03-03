@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  KeyboardAvoidingView,
 } from "react-native";
 import { Note } from "../lib/types";
 import VoiceNoteButton from "./VoiceNoteButton";
@@ -116,7 +117,11 @@ export default function NotesList({ notes, onAdd, onUpdate, onDelete }: Props) {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior="height"
+      keyboardVerticalOffset={100}
+    >
       <Text style={styles.header}>Notes</Text>
 
       <View style={styles.addContainer}>
@@ -146,7 +151,7 @@ export default function NotesList({ notes, onAdd, onUpdate, onDelete }: Props) {
           notes.map((note: Note) => renderNote({ item: note }))
         )}
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

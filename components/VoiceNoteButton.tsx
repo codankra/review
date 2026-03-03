@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
-import * as SpeechRecognition from "../modules/speech-recognition";
+import React, { useState } from "react";
+import { Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import {
+  ExpoSpeechRecognitionModule,
+  useSpeechRecognitionEvent,
+} from "expo-speech-recognition";
 
 interface Props {
   onTranscript: (text: string) => void;
@@ -10,57 +13,61 @@ export default function VoiceNoteButton({ onTranscript }: Props) {
   const [isListening, setIsListening] = useState(false);
   const [partialTranscript, setPartialTranscript] = useState("");
 
-  useEffect(() => {
-    const subscriptions = [
-      SpeechRecognition.addListener("onReadyForSpeech", () => {
-        console.log("Ready for speech");
-      }),
+  useSpeechRecognitionEvent("start", () => {
+    console.log("Speech started");
+  });
 
-      SpeechRecognition.addListener("onBeginningOfSpeech", () => {
-        console.log("Speech started");
-      }),
+  useSpeechRecognitionEvent("audiostart", () => {
+    console.log("Audio capturing started");
+  });
 
-      SpeechRecognition.addListener("onEndOfSpeech", () => {
-        setIsListening(false);
-      }),
+  useSpeechRecognitionEvent("audioend", () => {
+    console.log("Audio capturing ended");
+  });
 
-      SpeechRecognition.addListener("onError", ({ error }) => {
-        console.error("Speech error:", error);
-        setIsListening(false);
-        Alert.alert("Error", error);
-      }),
+  useSpeechRecognitionEvent("end", () => {
+    setIsListening(false);
+  });
 
-      SpeechRecognition.addListener("onResults", ({ transcript }) => {
-        console.log("Final result:", transcript);
-        onTranscript(transcript);
-        setPartialTranscript("");
-      }),
+  useSpeechRecognitionEvent("result", (event) => {
+    const result = event.results[0];
+    if (!result || !event.isFinal) return;
 
-      SpeechRecognition.addListener("onPartialResults", ({ transcript }) => {
-        console.log("Partial result:", transcript);
-        setPartialTranscript(transcript);
-      }),
-    ];
+    console.log("Result:", result.transcript);
+    setPartialTranscript(result.transcript);
+    onTranscript(result.transcript);
+  });
 
-    return () => {
-      subscriptions.forEach((sub) => sub.remove());
-      SpeechRecognition.destroy();
-    };
-  }, [onTranscript]);
+  useSpeechRecognitionEvent("nomatch", () => {
+    console.log("No speech match");
+  });
+
+  useSpeechRecognitionEvent("error", (event) => {
+    console.error("Speech error:", event.error, event.message);
+    setIsListening(false);
+    Alert.alert("Error", event.message || event.error);
+  });
 
   const handlePress = async () => {
     if (isListening) {
-      await SpeechRecognition.stop();
-      setIsListening(false);
+      await ExpoSpeechRecognitionModule.stop();
     } else {
-      const available = await SpeechRecognition.isAvailable();
-      if (!available) {
-        Alert.alert("Error", "Speech recognition not available on this device");
-        return;
+      const permissions = await ExpoSpeechRecognitionModule.getPermissionsAsync();
+      if (!permissions.granted) {
+        const result = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+        if (!result.granted) {
+          Alert.alert("Error", "Speech recognition permission not granted");
+          return;
+        }
       }
 
       try {
-        await SpeechRecognition.start();
+        await ExpoSpeechRecognitionModule.start({
+          lang: "en-US",
+          interimResults: true,
+          maxAlternatives: 1,
+          continuous: false,
+        });
         setIsListening(true);
         setPartialTranscript("");
       } catch (error) {
