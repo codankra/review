@@ -5,7 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  FlatList,
+  ScrollView,
   Alert,
 } from "react-native";
 import { Note } from "../lib/types";
@@ -77,7 +77,7 @@ export default function NotesList({ notes, onAdd, onUpdate, onDelete }: Props) {
 
     if (isEditing) {
       return (
-        <View style={styles.noteCard}>
+        <View key={item.id} style={styles.noteCard}>
           <TextInput
             style={styles.editInput}
             value={editText}
@@ -98,7 +98,7 @@ export default function NotesList({ notes, onAdd, onUpdate, onDelete }: Props) {
     }
 
     return (
-      <View style={styles.noteCard}>
+      <View key={item.id} style={styles.noteCard}>
         <View style={styles.noteHeader}>
           <Text style={styles.noteDate}>{formatDate(item.created_at)}</Text>
           <View style={styles.noteActions}>
@@ -139,17 +139,13 @@ export default function NotesList({ notes, onAdd, onUpdate, onDelete }: Props) {
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={notes}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderNote}
-        style={styles.list}
-        nestedScrollEnabled
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
+      <ScrollView style={styles.list} nestedScrollEnabled showsVerticalScrollIndicator={false}>
+        {notes.length === 0 ? (
           <Text style={styles.emptyText}>No notes yet. Add one above!</Text>
-        }
-      />
+        ) : (
+          notes.map((note: Note) => renderNote({ item: note }))
+        )}
+      </ScrollView>
     </View>
   );
 }
