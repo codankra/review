@@ -2,6 +2,8 @@ package codankra.review.speechrecognition
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -13,6 +15,7 @@ import java.util.Locale
 class SpeechRecognitionModule : Module() {
   private var speechRecognizer: SpeechRecognizer? = null
   private var isListening = false
+  private val mainHandler = Handler(Looper.getMainLooper())
 
   override fun definition() = ModuleDefinition {
     Name("SpeechRecognition")
@@ -20,7 +23,9 @@ class SpeechRecognitionModule : Module() {
     Events("onReadyForSpeech", "onBeginningOfSpeech", "onEndOfSpeech", "onError", "onResults", "onPartialResults")
 
     AsyncFunction("isAvailable") {
-      return@AsyncFunction SpeechRecognizer.isRecognitionAvailable(appContext.reactContext)
+      return@AsyncFunction SpeechRecognizer.isRecognitionAvailable(
+        appContext.reactContext ?: return@AsyncFunction false
+      )
     }
 
     AsyncFunction("start") {
@@ -30,81 +35,89 @@ class SpeechRecognitionModule : Module() {
 
       val context = appContext.reactContext ?: throw Exception("Context not available")
 
-      if (speechRecognizer == null) {
-        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context).apply {
-          setRecognitionListener(object : RecognitionListener {
-            override fun onReadyForSpeech(params: Bundle?) {
-              sendEvent("onReadyForSpeech", null)
-            }
-
-            override fun onBeginningOfSpeech() {
-              sendEvent("onBeginningOfSpeech", null)
-            }
-
-            override fun onRmsChanged(rmsdB: Float) {}
-
-            override fun onBufferReceived(buffer: ByteArray?) {}
-
-            override fun onEndOfSpeech() {
-              isListening = false
-              sendEvent("onEndOfSpeech", null)
-            }
-
-            override fun onError(error: Int) {
-              isListening = false
-              sendEvent("onError", bundleOf("error" to getErrorText(error)))
-            }
-
-            override fun onResults(results: Bundle?) {
-              isListening = false
-              val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-              if (!matches.isNullOrEmpty()) {
-                sendEvent("onResults", bundleOf("transcript" to matches[0]))
-              }
-            }
-
-            override fun onPartialResults(partialResults: Bundle?) {
-              val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-              if (!matches.isNullOrEmpty()) {
-                sendEvent("onPartialResults", bundleOf("transcript" to matches[0]))
-              }
-            }
-
-            override fun onEvent(eventType: Int, params: Bundle?) {}
-          })
-        }
-      }
-
-      val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-        putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-        putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-        putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
-        putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
-      }
-
-      speechRecognizer?.startListening(intent)
+      // SpeechRecognizer must be created and used on the main thread.
+      // AsyncFunction runs on a worker thread, so dispatch all SR calls via mainHandler.
       isListening = true
+      mainHandler.post {
+        if (speechRecognizer == null) {
+          speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context).apply {
+            setRecognitionListener(object : RecognitionListener {
+              override fun onReadyForSpeech(params: Bundle?) {
+                sendEvent("onReadyForSpeech", null)
+              }
+
+              override fun onBeginningOfSpeech() {
+                sendEvent("onBeginningOfSpeech", null)
+              }
+
+              override fun onRmsChanged(rmsdB: Float) {}
+
+              override fun onBufferReceived(buffer: ByteArray?) {}
+
+              override fun onEndOfSpeech() {
+                isListening = false
+                sendEvent("onEndOfSpeech", null)
+              }
+
+              override fun onError(error: Int) {
+                isListening = false
+                sendEvent("onError", bundleOf("error" to getErrorText(error)))
+              }
+
+              override fun onResults(results: Bundle?) {
+                isListening = false
+                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                if (!matches.isNullOrEmpty()) {
+                  sendEvent("onResults", bundleOf("transcript" to matches[0]))
+                }
+              }
+
+              override fun onPartialResults(partialResults: Bundle?) {
+                val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                if (!matches.isNullOrEmpty()) {
+                  sendEvent("onPartialResults", bundleOf("transcript" to matches[0]))
+                }
+              }
+
+              override fun onEvent(eventType: Int, params: Bundle?) {}
+            })
+          }
+        }
+
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+          putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+          putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+          putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+          putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+          putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
+        }
+
+        speechRecognizer?.startListening(intent)
+      }
     }
 
     AsyncFunction("stop") {
-      if (speechRecognizer != null && isListening) {
-        speechRecognizer?.stopListening()
-        isListening = false
+      mainHandler.post {
+        if (isListening) {
+          speechRecognizer?.stopListening()
+          isListening = false
+        }
       }
     }
 
     AsyncFunction("cancel") {
-      if (speechRecognizer != null) {
+      mainHandler.post {
         speechRecognizer?.cancel()
         isListening = false
       }
     }
 
     AsyncFunction("destroy") {
-      speechRecognizer?.destroy()
-      speechRecognizer = null
-      isListening = false
+      mainHandler.post {
+        speechRecognizer?.destroy()
+        speechRecognizer = null
+        isListening = false
+      }
     }
   }
 
