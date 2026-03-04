@@ -74,10 +74,9 @@ export default function MetricGrid({ config, entries, onScoreChange }: Props) {
 
   const handleCellPress = useCallback(
     (date: string, metricId: string, currentScore: ScoreValue | undefined) => {
-      if (date !== today) return; // past dates are read-only
       onScoreChange(date, metricId, cycleScore(currentScore));
     },
-    [today, onScoreChange]
+    [onScoreChange]
   );
 
   const LABEL_WIDTH = 130;
@@ -136,9 +135,13 @@ export default function MetricGrid({ config, entries, onScoreChange }: Props) {
                   return (
                     <TouchableOpacity
                       key={entry.date}
-                      style={[styles.scoreCell, { width: CELL_WIDTH, height: ROW_HEIGHT }]}
+                      style={[
+                        styles.scoreCell,
+                        { width: CELL_WIDTH, height: ROW_HEIGHT },
+                        isToday && styles.todayColumn,
+                      ]}
                       onPress={() => handleCellPress(entry.date, metric.id, score)}
-                      activeOpacity={isToday ? 0.5 : 1}
+                      activeOpacity={0.5}
                     >
                       <Text style={[styles.scoreSymbol, { color: scoreColor(score) }]}>
                         {scoreSymbol(score)}
@@ -220,5 +223,8 @@ const styles = StyleSheet.create({
   },
   scoreSymbol: {
     fontSize: 20,
+  },
+  todayColumn: {
+    backgroundColor: "#1E2A3A",
   },
 });

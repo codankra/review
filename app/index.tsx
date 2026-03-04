@@ -28,6 +28,7 @@ import {
   addNote,
   updateNote,
   deleteNote,
+  generateDateRange,
 } from "../lib/database";
 import { AppSettings, DailyEntry, ScoreValue, Note } from "../lib/types";
 
@@ -49,9 +50,26 @@ export default function DashboardScreen() {
       getAllNotes(db),
     ]);
     setSettings(s);
-    setEntries(activeEntries);
+    
+    // Generate full date range from earliest entry to today
+    let displayEntries = activeEntries;
+    if (activeEntries.length > 0) {
+      const earliestDate = activeEntries[0].date;
+      const allDates = generateDateRange(earliestDate, today);
+      
+      // Create a map of existing entries by date
+      const entryMap = new Map(activeEntries.map(e => [e.date, e]));
+      
+      // Fill in missing dates with empty entries
+      displayEntries = allDates.map(date => {
+        const existing = entryMap.get(date);
+        return existing || { date, scores: {}, is_archived: 0 as const };
+      });
+    }
+    
+    setEntries(displayEntries);
     setNotes(allNotes);
-  }, [db]);
+  }, [db, today]);
 
   // Initial load + reload when screen comes back into focus (e.g. after Settings)
   useFocusEffect(

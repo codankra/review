@@ -56,6 +56,22 @@ export async function getActiveEntries(db: SQLite.SQLiteDatabase): Promise<Daily
   return rows.map(rowToEntry);
 }
 
+export function generateDateRange(startDate: string, endDate: string): string[] {
+  const dates: string[] = [];
+  const current = new Date(startDate + "T00:00:00");
+  const end = new Date(endDate + "T00:00:00");
+  
+  while (current <= end) {
+    const y = current.getFullYear();
+    const m = String(current.getMonth() + 1).padStart(2, "0");
+    const d = String(current.getDate()).padStart(2, "0");
+    dates.push(`${y}-${m}-${d}`);
+    current.setDate(current.getDate() + 1);
+  }
+  
+  return dates;
+}
+
 export async function updateNotes(
   db: SQLite.SQLiteDatabase,
   date: string,
@@ -80,10 +96,12 @@ export async function updateScore(
     scores = JSON.parse(row?.scores ?? "{}");
   } catch {}
   scores[metricId] = value as 0 | 0.5 | 1.0;
-  await db.runAsync(`UPDATE daily_entries SET scores = ? WHERE date = ?`, [
-    JSON.stringify(scores),
-    date,
-  ]);
+  
+  // Use INSERT OR REPLACE to handle missing rows
+  await db.runAsync(
+    `INSERT OR REPLACE INTO daily_entries (date, scores, is_archived) VALUES (?, ?, 0)`,
+    [date, JSON.stringify(scores)]
+  );
 }
 
 export async function archiveAllActive(db: SQLite.SQLiteDatabase): Promise<void> {
