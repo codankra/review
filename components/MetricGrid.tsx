@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -19,7 +19,6 @@ interface Props {
   onScoreChange: (date: string, metricId: string, value: ScoreValue) => void;
 }
 
-// Cycle: 0 -> 0.5 -> 1.0 -> 0
 function cycleScore(current: ScoreValue | undefined): ScoreValue {
   if (current === undefined || current === 0) return 0.5;
   if (current === 0.5) return 1.0;
@@ -39,23 +38,25 @@ function scoreColor(score: ScoreValue | undefined): string {
 }
 
 function formatDateHeader(dateStr: string): string {
-  const d = new Date(dateStr + "T00:00:00"); // force local
+  const d = new Date(dateStr + "T00:00:00");
   const day = d.toLocaleDateString("en-US", { weekday: "short" });
   const num = d.getDate();
   return `${day}\n${num}`;
 }
 
-async function openLinkedApp(metric: { linkPackage: string | null; linkScheme: string | null; label: string }) {
+async function openLinkedApp(metric: {
+  linkPackage: string | null;
+  linkScheme: string | null;
+  label: string;
+}) {
   if (Platform.OS === "android" && metric.linkPackage) {
     try {
       await IntentLauncher.startActivityAsync("android.intent.action.MAIN", {
         packageName: metric.linkPackage,
-        flags: 0x10000000, // FLAG_ACTIVITY_NEW_TASK
+        flags: 0x10000000,
       });
       return;
-    } catch {
-      // fall through to URI scheme
-    }
+    } catch {}
   }
   if (metric.linkScheme) {
     const canOpen = await Linking.canOpenURL(metric.linkScheme);
@@ -65,102 +66,183 @@ async function openLinkedApp(metric: { linkPackage: string | null; linkScheme: s
     }
   }
   if (metric.linkPackage || metric.linkScheme) {
-    Alert.alert("App Not Found", `Could not open the app linked to "${metric.label}".`);
+    Alert.alert(
+      "App Not Found",
+      `Could not open the app linked to "${metric.label}".`,
+    );
   }
 }
 
 export default function MetricGrid({ config, entries, onScoreChange }: Props) {
   const today = getTodayDateString();
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const handleCellPress = useCallback(
     (date: string, metricId: string, currentScore: ScoreValue | undefined) => {
       onScoreChange(date, metricId, cycleScore(currentScore));
     },
-    [onScoreChange]
+    [onScoreChange],
   );
 
   const LABEL_WIDTH = 130;
   const CELL_WIDTH = 52;
   const ROW_HEIGHT = 44;
 
-  return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.outerScroll}>
-      <View>
-        {/* Date header row */}
-        <View style={styles.headerRow}>
-          <View style={[styles.labelCell, { width: LABEL_WIDTH }]} />
-          {entries.map((entry) => (
-            <View key={entry.date} style={[styles.dateHeader, { width: CELL_WIDTH }]}>
-              <Text style={[styles.dateHeaderText, entry.date === today && styles.todayText]}>
-                {formatDateHeader(entry.date)}
-              </Text>
+  const periodStart = entries.length > 0 ? entries[0].date : "";
+
+  const formatPeriodStart = (dateStr: string): string => {
+    if (!dateStr) return "";
+    const d = new Date(dateStr + "T00:00:00");
+    return d.toLocaleDateString("en-US", {
+      month: "2-digit",
+      day: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  const renderHeader = () => (
+    <View style={styles.headerRow}>
+      <View style={[styles.labelCell, { width: LABEL_WIDTH }]}>
+        <Text style={styles.periodStartLabel}>Period Start</Text>
+        <Text style={styles.periodStartDate}>
+          {formatPeriodStart(periodStart)}
+        </Text>
+      </View>
+    </View>
+  );
+
+  const renderLabels = () => (
+    <View>
+      {config.map((cat) => (
+        <View key={cat.category}>
+          <View style={styles.categoryRow}>
+            <Text style={styles.categoryLabel}>{cat.category}</Text>
+          </View>
+          {cat.metrics.map((metric) => (
+            <View
+              key={metric.id}
+              style={[styles.metricRow, { height: ROW_HEIGHT }]}
+            >
+              <TouchableOpacity
+                style={[styles.labelCell, { width: LABEL_WIDTH }]}
+                onPress={() => openLinkedApp(metric)}
+                onLongPress={() => openLinkedApp(metric)}
+                activeOpacity={
+                  metric.linkPackage || metric.linkScheme ? 0.6 : 1
+                }
+              >
+                <Text
+                  style={[
+                    styles.metricLabel,
+                    !!(metric.linkPackage || metric.linkScheme) &&
+                      styles.linkedLabel,
+                  ]}
+                  numberOfLines={2}
+                >
+                  {metric.label}
+                  {metric.linkPackage || metric.linkScheme ? " ↗" : ""}
+                </Text>
+              </TouchableOpacity>
             </View>
           ))}
         </View>
+      ))}
+    </View>
+  );
 
-        {/* Category + metric rows */}
-        {config.map((cat) => (
-          <View key={cat.category}>
-            {/* Category header */}
-            <View style={styles.categoryRow}>
-              <Text style={styles.categoryLabel}>{cat.category}</Text>
-            </View>
-
-            {/* Metric rows */}
-            {cat.metrics.map((metric) => (
-              <View key={metric.id} style={[styles.metricRow, { height: ROW_HEIGHT }]}>
-                {/* Metric label — tappable to open linked app */}
-                <TouchableOpacity
-                  style={[styles.labelCell, { width: LABEL_WIDTH }]}
-                  onPress={() => openLinkedApp(metric)}
-                  onLongPress={() => openLinkedApp(metric)}
-                  activeOpacity={metric.linkPackage || metric.linkScheme ? 0.6 : 1}
-                >
-                  <Text
-                    style={[
-                      styles.metricLabel,
-                      !!(metric.linkPackage || metric.linkScheme) && styles.linkedLabel,
-                    ]}
-                    numberOfLines={2}
-                  >
-                    {metric.label}
-                    {(metric.linkPackage || metric.linkScheme) ? " ↗" : ""}
-                  </Text>
-                </TouchableOpacity>
-
-                {/* Score cells */}
-                {entries.map((entry) => {
-                  const score = entry.scores[metric.id] as ScoreValue | undefined;
-                  const isToday = entry.date === today;
-                  return (
-                    <TouchableOpacity
-                      key={entry.date}
-                      style={[
-                        styles.scoreCell,
-                        { width: CELL_WIDTH, height: ROW_HEIGHT },
-                        isToday && styles.todayColumn,
-                      ]}
-                      onPress={() => handleCellPress(entry.date, metric.id, score)}
-                      activeOpacity={0.5}
-                    >
-                      <Text style={[styles.scoreSymbol, { color: scoreColor(score) }]}>
-                        {scoreSymbol(score)}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            ))}
+  const renderScoreCells = () => (
+    <View>
+      {/* Header row for dates */}
+      <View style={styles.headerRow}>
+        {entries.map((entry) => (
+          <View
+            key={entry.date}
+            style={[styles.dateHeader, { width: CELL_WIDTH }]}
+          >
+            <Text
+              style={[
+                styles.dateHeaderText,
+                entry.date === today && styles.todayText,
+              ]}
+            >
+              {formatDateHeader(entry.date)}
+            </Text>
           </View>
         ))}
       </View>
-    </ScrollView>
+      {config.map((cat) => (
+        <View key={cat.category}>
+          <View style={styles.categoryRowSpacer} />
+          {cat.metrics.map((metric) => (
+            <View
+              key={metric.id}
+              style={[styles.metricRow, { height: ROW_HEIGHT }]}
+            >
+              {entries.map((entry) => {
+                const score = entry.scores[metric.id] as ScoreValue | undefined;
+                const isToday = entry.date === today;
+                return (
+                  <TouchableOpacity
+                    key={entry.date}
+                    style={[
+                      styles.scoreCell,
+                      { width: CELL_WIDTH, height: ROW_HEIGHT },
+                      isToday && styles.todayColumn,
+                    ]}
+                    onPress={() =>
+                      handleCellPress(entry.date, metric.id, score)
+                    }
+                    activeOpacity={0.5}
+                  >
+                    <Text
+                      style={[styles.scoreSymbol, { color: scoreColor(score) }]}
+                    >
+                      {scoreSymbol(score)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.fixedColumn}>
+        {renderHeader()}
+        {renderLabels()}
+      </View>
+      <ScrollView
+        ref={scrollViewRef}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.scrollingColumn}
+        contentContainerStyle={styles.scrollingContent}
+      >
+        {renderScoreCells()}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  outerScroll: {
+  container: {
     flex: 1,
+    flexDirection: "row",
+  },
+  fixedColumn: {
+    width: 130,
+    backgroundColor: "#0A0A0A",
+    zIndex: 1,
+  },
+  scrollingColumn: {
+    flex: 1,
+  },
+  scrollingContent: {
+    flexDirection: "row",
   },
   headerRow: {
     flexDirection: "row",
@@ -184,12 +266,17 @@ const styles = StyleSheet.create({
     color: "#64B5F6",
     fontWeight: "700",
   },
+
+  periodStartLabel: {},
+  periodStartDate: {},
+  categoryRowSpacer: {
+    height: 38.5,
+  },
   categoryRow: {
     paddingVertical: 6,
     paddingHorizontal: 4,
-    backgroundColor: "#1A1A2E",
-    marginTop: 8,
-    marginBottom: 2,
+    marginTop: 10,
+    marginBottom: 0,
     borderRadius: 4,
   },
   categoryLabel: {
