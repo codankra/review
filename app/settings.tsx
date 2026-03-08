@@ -19,6 +19,8 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const [configText, setConfigText] = useState("");
   const [exportUrl, setExportUrl] = useState("");
+  const [todoistApiKey, setTodoistApiKey] = useState("");
+  const [todoistTaskId, setTodoistTaskId] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,6 +28,8 @@ export default function SettingsScreen() {
     loadSettings().then((s) => {
       setConfigText(JSON.stringify(s.config, null, 2));
       setExportUrl(s.exportUrl);
+      setTodoistApiKey(s.todoistApiKey);
+      setTodoistTaskId(s.todoistTaskId);
     });
   }, []);
 
@@ -34,7 +38,7 @@ export default function SettingsScreen() {
     setSaving(true);
     try {
       const config = parseAndValidateConfig(configText);
-      const settings: AppSettings = { config, exportUrl: exportUrl.trim() };
+      const settings: AppSettings = { config, exportUrl: exportUrl.trim(), todoistApiKey: todoistApiKey.trim(), todoistTaskId: todoistTaskId.trim() };
       await saveSettings(settings);
       router.back();
     } catch (e: any) {
@@ -88,6 +92,33 @@ export default function SettingsScreen() {
             autoCorrect={false}
             keyboardType="url"
           />
+
+          {/* Todoist API Key */}
+          <Text style={styles.label}>Todoist API Key</Text>
+          <TextInput
+            style={styles.urlInput}
+            value={todoistApiKey}
+            onChangeText={setTodoistApiKey}
+            placeholder="Your Todoist API token"
+            placeholderTextColor="#555"
+            autoCapitalize="none"
+            autoCorrect={false}
+            secureTextEntry
+          />
+          <Text style={styles.hint}>Get your token from Todoist {"→"} Settings {"→"} Integrations {"→"} Developer</Text>
+
+          {/* Todoist Task ID */}
+          <Text style={styles.label}>Todoist Task ID</Text>
+          <TextInput
+            style={styles.urlInput}
+            value={todoistTaskId}
+            onChangeText={setTodoistTaskId}
+            placeholder="Task ID to update"
+            placeholderTextColor="#555"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <Text style={styles.hint}>Open a task in Todoist web — the ID is in the URL after /task/</Text>
 
           {/* Config JSON editor */}
           <View style={styles.configHeader}>
@@ -173,6 +204,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     marginBottom: 8,
     marginTop: 16,
+  },
+  hint: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 6,
   },
   urlInput: {
     backgroundColor: "#1A1A2E",

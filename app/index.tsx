@@ -157,6 +157,7 @@ export default function DashboardScreen() {
             try {
               const payload = {
                 period_end_date: today,
+                todoist_task_id: settings.todoistTaskId,
                 entries: entries.map((e) => ({
                   date: e.date,
                   scores: e.scores,
@@ -169,7 +170,10 @@ export default function DashboardScreen() {
 
               const res = await fetch(settings.exportUrl, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                  "Content-Type": "application/json",
+                  "x-todoist-api-key": settings.todoistApiKey,
+                },
                 body: JSON.stringify(payload),
               });
 

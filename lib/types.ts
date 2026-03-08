@@ -36,6 +36,8 @@ export interface DailyEntryRow {
 export interface AppSettings {
   config: CategoryConfig[];
   exportUrl: string;
+  todoistApiKey: string;
+  todoistTaskId: string;
 }
 
 export const DEFAULT_CONFIG: CategoryConfig[] = [
@@ -56,3 +58,5 @@ export const DEFAULT_CONFIG: CategoryConfig[] = [
 ];
 
 export const DEFAULT_EXPORT_URL = "";
+export const DEFAULT_TODOIST_API_KEY = "";
+export const DEFAULT_TODOIST_TASK_ID = "";
