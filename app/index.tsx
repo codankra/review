@@ -30,6 +30,7 @@ import {
   deleteNote,
   generateDateRange,
 } from "../lib/database";
+import { buildExportPayload, sendExportRequest } from "../lib/export";
 import { AppSettings, DailyEntry, ScoreValue, Note } from "../lib/types";
 
 export default function DashboardScreen() {
@@ -50,23 +51,23 @@ export default function DashboardScreen() {
       getAllNotes(db),
     ]);
     setSettings(s);
-    
+
     // Generate full date range from earliest entry to today
     let displayEntries = activeEntries;
     if (activeEntries.length > 0) {
       const earliestDate = activeEntries[0].date;
       const allDates = generateDateRange(earliestDate, today);
-      
+
       // Create a map of existing entries by date
-      const entryMap = new Map(activeEntries.map(e => [e.date, e]));
-      
+      const entryMap = new Map(activeEntries.map((e) => [e.date, e]));
+
       // Fill in missing dates with empty entries
-      displayEntries = allDates.map(date => {
+      displayEntries = allDates.map((date) => {
         const existing = entryMap.get(date);
         return existing || { date, scores: {}, is_archived: 0 as const };
       });
     }
-    
+
     setEntries(displayEntries);
     setNotes(allNotes);
   }, [db, today]);
@@ -75,7 +76,7 @@ export default function DashboardScreen() {
   useFocusEffect(
     useCallback(() => {
       refresh();
-    }, [refresh])
+    }, [refresh]),
   );
 
   // If the app is brought back to foreground on a new day, seed today's row
@@ -95,12 +96,14 @@ export default function DashboardScreen() {
       // Optimistic update
       setEntries((prev) =>
         prev.map((e) =>
-          e.date === date ? { ...e, scores: { ...e.scores, [metricId]: value } } : e
-        )
+          e.date === date
+            ? { ...e, scores: { ...e.scores, [metricId]: value } }
+            : e,
+        ),
       );
       await updateScore(db, date, metricId, value);
     },
-    [db]
+    [db],
   );
 
   // ─── Notes handlers ───────────────────────────────────────────────
@@ -109,17 +112,15 @@ export default function DashboardScreen() {
       const newNote = await addNote(db, text);
       setNotes((prev) => [newNote, ...prev]);
     },
-    [db]
+    [db],
   );
 
   const handleUpdateNote = useCallback(
     async (id: number, text: string) => {
       await updateNote(db, id, text);
-      setNotes((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, text } : n))
-      );
+      setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, text } : n)));
     },
-    [db]
+    [db],
   );
 
   const handleDeleteNote = useCallback(
@@ -127,7 +128,7 @@ export default function DashboardScreen() {
       await deleteNote(db, id);
       setNotes((prev) => prev.filter((n) => n.id !== id));
     },
-    [db]
+    [db],
   );
 
   // ─── Export logic ────────────────────────────────────────────────
@@ -139,7 +140,7 @@ export default function DashboardScreen() {
         [
           { text: "Open Settings", onPress: () => router.push("/settings") },
           { text: "Cancel", style: "cancel" },
-        ]
+        ],
       );
       return;
     }
@@ -155,49 +156,34 @@ export default function DashboardScreen() {
           onPress: async () => {
             setExporting(true);
             try {
-              const payload = {
-                period_end_date: today,
-                todoist_task_id: settings.todoistTaskId,
-                entries: entries.map((e) => ({
-                  date: e.date,
-                  scores: e.scores,
-                })),
-                notes: notes.map((n) => ({
-                  text: n.text,
-                  created_at: n.created_at,
-                })),
-              };
-
-              const res = await fetch(settings.exportUrl, {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "x-todoist-api-key": settings.todoistApiKey,
-                },
-                body: JSON.stringify(payload),
-              });
-
-              if (!res.ok) {
-                throw new Error(`Server responded with ${res.status}: ${res.statusText}`);
-              }
+              const payload = buildExportPayload(
+                entries,
+                notes,
+                settings,
+                today,
+              );
+              await sendExportRequest(payload, settings);
 
               // Archive everything and refresh
               await archiveAllActive(db);
               await ensureTodayRow(db); // seed fresh today row
               await refresh();
 
-              Alert.alert("Period Closed ✓", "Your data has been exported and the period has been reset.");
+              Alert.alert(
+                "Period Closed ✓",
+                "Your data has been exported and the period has been reset.",
+              );
             } catch (e: any) {
               Alert.alert(
                 "Export Failed",
-                `${e.message}\n\nYour data has NOT been archived. You can retry.`
+                `${e.message}\n\nYour data has NOT been archived. You can retry.`,
               );
             } finally {
               setExporting(false);
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -206,7 +192,12 @@ export default function DashboardScreen() {
 
   if (!settings) {
     return (
-      <View style={[styles.safe, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <View
+        style={[
+          styles.safe,
+          { paddingTop: insets.top, paddingBottom: insets.bottom },
+        ]}
+      >
         <View style={styles.loading}>
           <ActivityIndicator color="#BB86FC" />
         </View>
@@ -221,14 +212,22 @@ export default function DashboardScreen() {
   })();
 
   return (
-    <View style={[styles.safe, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View
+      style={[
+        styles.safe,
+        { paddingTop: insets.top, paddingBottom: insets.bottom },
+      ]}
+    >
       {/* ── Top bar ── */}
       <View style={styles.topBar}>
         <View>
           <Text style={styles.appTitle}>Theme Tracker</Text>
           <Text style={styles.periodLabel}>{periodLabel}</Text>
         </View>
-        <TouchableOpacity onPress={() => router.push("/settings")} style={styles.settingsBtn}>
+        <TouchableOpacity
+          onPress={() => router.push("/settings")}
+          style={styles.settingsBtn}
+        >
           <Text style={styles.settingsIcon}>⚙</Text>
         </TouchableOpacity>
       </View>
