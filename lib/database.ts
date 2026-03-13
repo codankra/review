@@ -44,23 +44,28 @@ export async function initDatabase(db: SQLite.SQLiteDatabase): Promise<void> {
 export async function ensureTodayRow(db: SQLite.SQLiteDatabase): Promise<void> {
   const today = getTodayDateString();
   await db.runAsync(
-    `INSERT OR IGNORE INTO daily_entries (date, notes, scores, is_archived) VALUES (?, '', '{}', 0)`,
-    [today]
+    `INSERT OR IGNORE INTO daily_entries (date, scores, is_archived) VALUES (?, '{}', 0)`,
+    [today],
   );
 }
 
-export async function getActiveEntries(db: SQLite.SQLiteDatabase): Promise<DailyEntry[]> {
+export async function getActiveEntries(
+  db: SQLite.SQLiteDatabase,
+): Promise<DailyEntry[]> {
   const rows = await db.getAllAsync<DailyEntryRow>(
-    `SELECT * FROM daily_entries WHERE is_archived = 0 ORDER BY date ASC`
+    `SELECT * FROM daily_entries WHERE is_archived = 0 ORDER BY date ASC`,
   );
   return rows.map(rowToEntry);
 }
 
-export function generateDateRange(startDate: string, endDate: string): string[] {
+export function generateDateRange(
+  startDate: string,
+  endDate: string,
+): string[] {
   const dates: string[] = [];
   const current = new Date(startDate + "T00:00:00");
   const end = new Date(endDate + "T00:00:00");
-  
+
   while (current <= end) {
     const y = current.getFullYear();
     const m = String(current.getMonth() + 1).padStart(2, "0");
@@ -68,73 +73,91 @@ export function generateDateRange(startDate: string, endDate: string): string[] 
     dates.push(`${y}-${m}-${d}`);
     current.setDate(current.getDate() + 1);
   }
-  
+
   return dates;
 }
 
 export async function updateNotes(
   db: SQLite.SQLiteDatabase,
   date: string,
-  notes: string
+  notes: string,
 ): Promise<void> {
-  await db.runAsync(`UPDATE daily_entries SET notes = ? WHERE date = ?`, [notes, date]);
+  await db.runAsync(`UPDATE daily_entries SET notes = ? WHERE date = ?`, [
+    notes,
+    date,
+  ]);
 }
 
 export async function updateScore(
   db: SQLite.SQLiteDatabase,
   date: string,
   metricId: string,
-  value: number
+  value: number,
 ): Promise<void> {
   // Read current scores, patch, write back
   const row = await db.getFirstAsync<{ scores: string }>(
     `SELECT scores FROM daily_entries WHERE date = ?`,
-    [date]
+    [date],
   );
   let scores: ScoresMap = {};
   try {
     scores = JSON.parse(row?.scores ?? "{}");
   } catch {}
   scores[metricId] = value as 0 | 0.5 | 1.0;
-  
+
   // Use INSERT OR REPLACE to handle missing rows
   await db.runAsync(
     `INSERT OR REPLACE INTO daily_entries (date, scores, is_archived) VALUES (?, ?, 0)`,
-    [date, JSON.stringify(scores)]
+    [date, JSON.stringify(scores)],
   );
 }
 
-export async function archiveAllActive(db: SQLite.SQLiteDatabase): Promise<void> {
-  await db.runAsync(`UPDATE daily_entries SET is_archived = 1 WHERE is_archived = 0`);
+export async function archiveAllActive(
+  db: SQLite.SQLiteDatabase,
+): Promise<void> {
+  await db.runAsync(
+    `UPDATE daily_entries SET is_archived = 1 WHERE is_archived = 0`,
+  );
 }
 
-export async function getAllActiveRaw(db: SQLite.SQLiteDatabase): Promise<DailyEntry[]> {
+export async function getAllActiveRaw(
+  db: SQLite.SQLiteDatabase,
+): Promise<DailyEntry[]> {
   return getActiveEntries(db);
 }
 
 export async function getAllNotes(db: SQLite.SQLiteDatabase): Promise<Note[]> {
   const rows = await db.getAllAsync<Note>(
-    `SELECT id, text, created_at FROM notes ORDER BY created_at DESC`
+    `SELECT id, text, created_at FROM notes ORDER BY created_at DESC`,
   );
   return rows;
 }
 
-export async function addNote(db: SQLite.SQLiteDatabase, text: string): Promise<Note> {
-  const result = await db.runAsync(
-    `INSERT INTO notes (text) VALUES (?)`,
-    [text]
-  );
+export async function addNote(
+  db: SQLite.SQLiteDatabase,
+  text: string,
+): Promise<Note> {
+  const result = await db.runAsync(`INSERT INTO notes (text) VALUES (?)`, [
+    text,
+  ]);
   const rows = await db.getAllAsync<Note>(
     `SELECT id, text, created_at FROM notes WHERE id = ?`,
-    [result.lastInsertRowId]
+    [result.lastInsertRowId],
   );
   return rows[0];
 }
 
-export async function updateNote(db: SQLite.SQLiteDatabase, id: number, text: string): Promise<void> {
+export async function updateNote(
+  db: SQLite.SQLiteDatabase,
+  id: number,
+  text: string,
+): Promise<void> {
   await db.runAsync(`UPDATE notes SET text = ? WHERE id = ?`, [text, id]);
 }
 
-export async function deleteNote(db: SQLite.SQLiteDatabase, id: number): Promise<void> {
+export async function deleteNote(
+  db: SQLite.SQLiteDatabase,
+  id: number,
+): Promise<void> {
   await db.runAsync(`DELETE FROM notes WHERE id = ?`, [id]);
 }

@@ -12,7 +12,11 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { loadSettings, saveSettings, parseAndValidateConfig } from "../lib/storage";
+import {
+  loadSettings,
+  saveSettings,
+  parseAndValidateConfig,
+} from "../lib/storage";
 import { AppSettings } from "../lib/types";
 
 export default function SettingsScreen() {
@@ -38,7 +42,12 @@ export default function SettingsScreen() {
     setSaving(true);
     try {
       const config = parseAndValidateConfig(configText);
-      const settings: AppSettings = { config, exportUrl: exportUrl.trim(), todoistApiKey: todoistApiKey.trim(), todoistTaskId: todoistTaskId.trim() };
+      const settings: AppSettings = {
+        config,
+        exportUrl: exportUrl.trim(),
+        todoistApiKey: todoistApiKey.trim(),
+        todoistTaskId: todoistTaskId.trim(),
+      };
       await saveSettings(settings);
       router.back();
     } catch (e: any) {
@@ -59,14 +68,22 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View style={[styles.safe, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View
+      style={[
+        styles.safe,
+        { paddingTop: insets.top, paddingBottom: insets.bottom },
+      ]}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.flex}
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.cancelBtn}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.cancelBtn}
+          >
             <Text style={styles.cancelText}>✕ Cancel</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Settings</Text>
@@ -79,7 +96,10 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* Export URL */}
           <Text style={styles.label}>Export Webhook URL</Text>
           <TextInput
@@ -105,7 +125,10 @@ export default function SettingsScreen() {
             autoCorrect={false}
             secureTextEntry
           />
-          <Text style={styles.hint}>Get your token from Todoist {"→"} Settings {"→"} Integrations {"→"} Developer</Text>
+          <Text style={styles.hint}>
+            Get your token from Todoist {"→"} Settings {"→"} Integrations {"→"}{" "}
+            Developer
+          </Text>
 
           {/* Todoist Task ID */}
           <Text style={styles.label}>Todoist Task ID</Text>
@@ -118,7 +141,9 @@ export default function SettingsScreen() {
             autoCapitalize="none"
             autoCorrect={false}
           />
-          <Text style={styles.hint}>Open a task in Todoist web — the ID is in the URL after /task/</Text>
+          <Text style={styles.hint}>
+            Open a task in Todoist web — the ID is in the URL after /task/
+          </Text>
 
           {/* Config JSON editor */}
           <View style={styles.configHeader}>
@@ -137,7 +162,10 @@ export default function SettingsScreen() {
           <TextInput
             style={styles.jsonInput}
             value={configText}
-            onChangeText={(t) => { setConfigText(t); setError(null); }}
+            onChangeText={(t) => {
+              setConfigText(t);
+              setError(null);
+            }}
             multiline
             autoCapitalize="none"
             autoCorrect={false}
@@ -155,6 +183,7 @@ export default function SettingsScreen() {
       {
         "id": "unique_id",
         "label": "Display Name",
+        "weight": 1,
         "linkPackage": "com.app.package",
         "linkScheme": "appscheme://"
       }
@@ -162,6 +191,10 @@ export default function SettingsScreen() {
   }
 ]`}</Text>
           </View>
+          <Text style={styles.hint}>
+            weight is optional — controls each metric's share of its category
+            average (default: 1)
+          </Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -261,7 +294,12 @@ const styles = StyleSheet.create({
     borderColor: "#2A2A2A",
     padding: 12,
   },
-  hintTitle: { color: "#555", fontSize: 11, fontWeight: "600", marginBottom: 6 },
+  hintTitle: {
+    color: "#555",
+    fontSize: 11,
+    fontWeight: "600",
+    marginBottom: 6,
+  },
   hintText: {
     color: "#444",
     fontSize: 11,
