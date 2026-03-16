@@ -1,7 +1,13 @@
 name: Create Production Builds
 
 jobs:
-  build_android:
+  build_android_apk:
     type: build
     params:
       platform: android
+      profile: preview
+  build_android_app:
+    type: build
+    params:
+      platform: android
+      profile: production
