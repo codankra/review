@@ -15,7 +15,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.expolegos.review"
+      "bundleIdentifier": "com.expolegos.review",
+      "infoPlist": {
+        "NSSpeechRecognitionUsageDescription": "Allow $(PRODUCT_NAME) to use speech recognition.",
+        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use the microphone."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -25,17 +29,31 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "intentFilters": [],
-      "package": "com.expolegos.review"
+      "package": "com.expolegos.review",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-sqlite", "expo-router", "expo-speech-recognition"],
+    "plugins": [
+      "expo-sqlite",
+      "expo-router",
+      "expo-speech-recognition"
+    ],
     "extra": {
       "router": {},
       "eas": {
         "projectId": "dc395eb4-56a3-48f3-b297-13f93804d526"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/dc395eb4-56a3-48f3-b297-13f93804d526"
     }
   }
 }

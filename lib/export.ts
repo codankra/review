@@ -8,7 +8,7 @@ import {
 
 export interface ExportPayload {
   task_id: string;
-  comment: string;
+  content: string;
 }
 
 // ─── Score helpers ────────────────────────────────────────────────────────────
@@ -188,7 +188,7 @@ export function buildExportPayload(
 ): ExportPayload {
   return {
     task_id: settings.todoistTaskId,
-    comment: createReflectionMarkdown(
+    content: createReflectionMarkdown(
       entries,
       notes,
       settings.config,
@@ -210,7 +210,9 @@ export async function sendExportRequest(
     body: JSON.stringify(payload),
   });
 
+  const responseBody = await res.text();
+
   if (!res.ok) {
-    throw new Error(`Server responded with ${res.status}: ${res.statusText}`);
+    throw new Error(`Server responded with ${res.status}: ${res.statusText} - ${responseBody}`);
   }
 }
