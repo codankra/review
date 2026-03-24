@@ -84,7 +84,7 @@ export default function MetricGrid({ config, entries, onScoreChange }: Props) {
     [onScoreChange],
   );
 
-  const LABEL_WIDTH = 130;
+  const LABEL_WIDTH = 150;
   const CELL_WIDTH = 52;
   const ROW_HEIGHT = 44;
 
@@ -116,7 +116,9 @@ export default function MetricGrid({ config, entries, onScoreChange }: Props) {
       {config.map((cat) => (
         <View key={cat.category}>
           <View style={styles.categoryRow}>
-            <Text style={styles.categoryLabel}>{cat.category}</Text>
+            <Text style={styles.categoryLabel} numberOfLines={1}>
+              {cat.category}
+            </Text>
           </View>
           {cat.metrics.map((metric) => (
             <View
@@ -232,11 +234,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: "row",
+    overflow: "visible",
   },
   fixedColumn: {
-    width: 130,
+    width: 150,
     backgroundColor: "#0A0A0A",
     zIndex: 1,
+    overflow: "visible",
   },
   scrollingColumn: {
     flex: 1,
@@ -278,6 +282,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 0,
     borderRadius: 4,
+    alignItems: "flex-start",
   },
   categoryLabel: {
     fontWeight: "700",
@@ -285,6 +290,7 @@ const styles = StyleSheet.create({
     color: "#BB86FC",
     letterSpacing: 1,
     textTransform: "uppercase",
+    width: 500,
   },
   metricRow: {
     flexDirection: "row",
