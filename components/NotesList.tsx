@@ -125,7 +125,7 @@ export default memo(function NotesList({
         showsVerticalScrollIndicator={false}
       >
         {notes.length === 0 ? (
-          <Text style={styles.emptyText}>No notes yet. Add one above!</Text>
+          <Text style={styles.emptyText}>What are you thinking?</Text>
         ) : (
           notes.map((note: Note) => renderNote({ item: note }))
         )}
@@ -228,10 +228,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   emptyText: {
-    color: "#555",
+    color: "#888",
     fontSize: 13,
     textAlign: "center",
-    padding: 20,
+    paddingTop: 8,
     fontStyle: "italic",
   },
 });

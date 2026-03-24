@@ -161,3 +161,9 @@ export async function deleteNote(
 ): Promise<void> {
   await db.runAsync(`DELETE FROM notes WHERE id = ?`, [id]);
 }
+
+export async function clearAllNotes(
+  db: SQLite.SQLiteDatabase,
+): Promise<void> {
+  await db.runAsync(`DELETE FROM notes`);
+}

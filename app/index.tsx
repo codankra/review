@@ -28,6 +28,7 @@ import {
   addNote,
   updateNote,
   deleteNote,
+  clearAllNotes,
   generateDateRange,
 } from "../lib/database";
 import { buildExportPayload, sendExportRequest } from "../lib/export";
@@ -147,7 +148,7 @@ export default function DashboardScreen() {
 
     Alert.alert(
       "Close & Export Period",
-      `This will export ${entries.length} day(s) and mark them as archived. Continue?`,
+      `This will export ${entries.length} day(s), archive them, and clear all notes. Continue?`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -164,8 +165,9 @@ export default function DashboardScreen() {
               );
               await sendExportRequest(payload, settings);
 
-              // Archive everything and refresh
+              // Archive entries, clear notes, and refresh
               await archiveAllActive(db);
+              await clearAllNotes(db);
               await ensureTodayRow(db); // seed fresh today row
               await refresh();
 
