@@ -8,6 +8,7 @@ import {
   Alert,
   ActivityIndicator,
   AppState,
+  KeyboardAvoidingView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSQLiteContext } from "expo-sqlite";
@@ -235,11 +236,16 @@ export default function DashboardScreen() {
       </View>
 
       {/* ── Main scrollable content ── */}
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoid}
+        behavior="padding"
+        keyboardVerticalOffset={0}
       >
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
         {/* Grid */}
         <View style={styles.gridContainer}>
           {settings.config.length === 0 ? (
@@ -272,6 +278,7 @@ export default function DashboardScreen() {
         {/* Spacer for footer */}
         <View style={{ height: 80 }} />
       </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* ── Footer ── */}
       <View style={styles.footer}>
@@ -328,6 +335,9 @@ const styles = StyleSheet.create({
   settingsIcon: {
     fontSize: 22,
     color: "#888",
+  },
+  keyboardAvoid: {
+    flex: 1,
   },
   scroll: {
     flex: 1,
