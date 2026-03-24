@@ -245,7 +245,11 @@ export default function DashboardScreen() {
               No metrics configured. Open Settings to add some.
             </Text>
           ) : entries.length === 0 ? (
-            <ActivityIndicator color="#BB86FC" />
+            <View style={styles.emptyEntriesContainer}>
+              <Text style={styles.emptyEntriesIcon}>🌿</Text>
+              <Text style={styles.emptyEntriesTitle}>What a week!</Text>
+              <Text style={styles.emptyEntriesText}>Take a moment to reflect.</Text>
+            </View>
           ) : (
             <MetricGrid
               config={settings.config}
@@ -338,6 +342,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
     paddingVertical: 24,
+    fontStyle: "italic",
+  },
+  emptyEntriesContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 32,
+    gap: 8,
+  },
+  emptyEntriesIcon: {
+    fontSize: 48,
+    marginBottom: 4,
+  },
+  emptyEntriesTitle: {
+    color: "#BB86FC",
+    fontSize: 20,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+  },
+  emptyEntriesText: {
+    color: "#888",
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
     fontStyle: "italic",
   },
   footer: {
