@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   AppState,
   KeyboardAvoidingView,
+  Keyboard,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSQLiteContext } from "expo-sqlite";
@@ -113,6 +114,7 @@ export default function DashboardScreen() {
     async (text: string) => {
       const newNote = await addNote(db, text);
       setNotes((prev) => [newNote, ...prev]);
+      Keyboard.dismiss();
     },
     [db],
   );

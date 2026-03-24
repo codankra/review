@@ -79,7 +79,7 @@ function VoiceNoteButtonComponent({ onTranscript }: Props) {
       style={[styles.button, isListening && styles.buttonActive]}
       onPress={handlePress}
     >
-      <Text style={styles.buttonText}>
+      <Text style={[styles.buttonText, isListening && styles.buttonTextActive]}>
         {isListening ? "◉" : "🎤"}
       </Text>
     </TouchableOpacity>
@@ -98,9 +98,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   buttonActive: {
-    backgroundColor: "#BB86FC",
+    backgroundColor: "#555",
   },
   buttonText: {
     fontSize: 20,
+  },
+  buttonTextActive: {
+    color: "#FF4444",
   },
 });

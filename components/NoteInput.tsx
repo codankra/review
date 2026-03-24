@@ -38,14 +38,16 @@ function NoteInputComponent({ onAdd }: Props) {
           placeholderTextColor="#555"
           multiline
         />
-        <VoiceNoteButton onTranscript={handleVoiceTranscript} />
-        <TouchableOpacity
-          onPress={handleAdd}
-          style={[styles.addBtn, !text.trim() && styles.addBtnDisabled]}
-          disabled={!text.trim()}
-        >
-          <Text style={styles.addBtnText}>+</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonsContainer}>
+          <VoiceNoteButton onTranscript={handleVoiceTranscript} />
+          <TouchableOpacity
+            onPress={handleAdd}
+            style={[styles.addBtn, !text.trim() && styles.addBtnDisabled]}
+            disabled={!text.trim()}
+          >
+            <Text style={styles.addBtnText}>+</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -58,6 +60,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-end",
     marginBottom: 16,
+  },
+  buttonsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: 50,
+    justifyContent: "center",
+    marginLeft: 8,
   },
   addInput: {
     flex: 1,
