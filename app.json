@@ -2,7 +2,7 @@
   "expo": {
     "name": "review",
     "slug": "review",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -38,11 +38,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-sqlite",
-      "expo-router",
-      "expo-speech-recognition"
-    ],
+    "plugins": ["expo-sqlite", "expo-router", "expo-speech-recognition"],
     "extra": {
       "router": {},
       "eas": {

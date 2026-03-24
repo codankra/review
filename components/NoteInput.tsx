@@ -1,4 +1,4 @@
-import React, { useState, memo, useCallback } from "react";
+import React, { useState, memo, useCallback, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   KeyboardAvoidingView,
+  Animated,
 } from "react-native";
 import VoiceNoteButton from "./VoiceNoteButton";
 
@@ -15,13 +16,29 @@ interface Props {
 
 function NoteInputComponent({ onAdd }: Props) {
   const [text, setText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const progressAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (isSubmitting) {
+      progressAnim.setValue(0);
+      Animated.timing(progressAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: false,
+      }).start(() => {
+        setIsSubmitting(false);
+      });
+    }
+  }, [isSubmitting, progressAnim]);
 
   const handleAdd = useCallback(() => {
     const trimmed = text.trim();
-    if (!trimmed) return;
+    if (!trimmed || isSubmitting) return;
+    setIsSubmitting(true);
     onAdd(trimmed);
     setText("");
-  }, [text, onAdd]);
+  }, [text, onAdd, isSubmitting]);
 
   const handleVoiceTranscript = useCallback((transcript: string) => {
     setText((prev) => (prev ? `${prev} ${transcript}` : transcript));
@@ -42,10 +59,29 @@ function NoteInputComponent({ onAdd }: Props) {
           <VoiceNoteButton onTranscript={handleVoiceTranscript} />
           <TouchableOpacity
             onPress={handleAdd}
-            style={[styles.addBtn, !text.trim() && styles.addBtnDisabled]}
-            disabled={!text.trim()}
+            style={[styles.addBtn, isSubmitting && styles.addBtnSuccess]}
+            disabled={isSubmitting || !text.trim()}
           >
-            <Text style={styles.addBtnText}>+</Text>
+            {isSubmitting ? (
+              <>
+                <Text style={[styles.addBtnText, styles.addBtnSuccessText]}>✓</Text>
+                <View style={styles.progressBarContainer}>
+                  <Animated.View
+                    style={[
+                      styles.progressBarFill,
+                      {
+                        width: progressAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ["0%", "100%"],
+                        }),
+                      },
+                    ]}
+                  />
+                </View>
+              </>
+            ) : (
+              <Text style={styles.addBtnText}>+</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -89,14 +125,33 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginLeft: 8,
+    overflow: "hidden",
   },
   addBtnDisabled: {
     opacity: 0.4,
+  },
+  addBtnSuccess: {
+    backgroundColor: "#4CAF50",
   },
   addBtnText: {
     fontSize: 24,
     fontWeight: "700",
     color: "#000",
     lineHeight: 28,
+  },
+  addBtnSuccessText: {
+    color: "#FFF",
+  },
+  progressBarContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+  },
+  progressBarFill: {
+    height: "100%",
+    backgroundColor: "#FFF",
   },
 });
