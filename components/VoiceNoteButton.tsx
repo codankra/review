@@ -1,5 +1,6 @@
 import React, { useState, memo } from "react";
 import { Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import * as Haptics from "expo-haptics";
 import {
   ExpoSpeechRecognitionModule,
   useSpeechRecognitionEvent,
@@ -12,8 +13,17 @@ interface Props {
 function VoiceNoteButtonComponent({ onTranscript }: Props) {
   const [isListening, setIsListening] = useState(false);
 
+  const playStartSound = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+
+  const playStopSound = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
   useSpeechRecognitionEvent("start", () => {
     console.log("Speech started");
+    playStartSound();
   });
 
   useSpeechRecognitionEvent("audiostart", () => {
@@ -26,6 +36,7 @@ function VoiceNoteButtonComponent({ onTranscript }: Props) {
 
   useSpeechRecognitionEvent("end", () => {
     setIsListening(false);
+    playStopSound();
   });
 
   useSpeechRecognitionEvent("result", (event) => {
