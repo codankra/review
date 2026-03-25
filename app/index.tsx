@@ -343,7 +343,6 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flex: 1,
-    overflow: "visible",
   },
   scrollContent: {
     paddingTop: 12,
@@ -351,7 +350,6 @@ const styles = StyleSheet.create({
   gridContainer: {
     paddingHorizontal: 12,
     minHeight: 80,
-    overflow: "visible",
   },
   emptyConfig: {
     color: "#555",

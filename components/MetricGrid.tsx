@@ -234,13 +234,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: "row",
-    overflow: "visible",
   },
   fixedColumn: {
     width: 150,
     backgroundColor: "#0A0A0A",
     zIndex: 1,
-    overflow: "visible",
   },
   scrollingColumn: {
     flex: 1,

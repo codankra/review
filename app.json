@@ -8,6 +8,7 @@
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "scheme": "review",
+    "platforms": ["android"],
     "splash": {
       "image": "./assets/icon.png",
       "resizeMode": "contain",
@@ -34,9 +35,6 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.RECORD_AUDIO"
       ]
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
     },
     "plugins": ["expo-sqlite", "expo-router", "expo-speech-recognition"],
     "extra": {
